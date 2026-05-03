@@ -1,0 +1,153 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "School Management API",
+    "description": "Collection for testing School Management System APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Check if the server is running and healthy"
+      },
+      "response": []
+    },
+    {
+      "name": "Add School",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Example School\",\n  \"address\": \"123 Main Street, City, State 12345\",\n  \"latitude\": 40.7128,\n  \"longitude\": -74.0060\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/addSchool",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "addSchool"]
+        },
+        "description": "Add a new school to the database"
+      },
+      "response": []
+    },
+    {
+      "name": "List Schools",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/listSchools?latitude=40.7128&longitude=-74.0060",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "listSchools"],
+          "query": [
+            {
+              "key": "latitude",
+              "value": "40.7128",
+              "description": "User's latitude coordinate"
+            },
+            {
+              "key": "longitude",
+              "value": "-74.0060",
+              "description": "User's longitude coordinate"
+            }
+          ]
+        },
+        "description": "Get all schools sorted by proximity to user's location"
+      },
+      "response": []
+    },
+    {
+      "name": "Add School - Invalid Data",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"\",\n  \"address\": \"123 Main Street\",\n  \"latitude\": 91.0,\n  \"longitude\": \"invalid\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/addSchool",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "addSchool"]
+        },
+        "description": "Test validation with invalid school data"
+      },
+      "response": []
+    },
+    {
+      "name": "List Schools - Invalid Coordinates",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/listSchools?latitude=91&longitude=invalid",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "listSchools"],
+          "query": [
+            {
+              "key": "latitude",
+              "value": "91",
+              "description": "Invalid latitude (out of range)"
+            },
+            {
+              "key": "longitude",
+              "value": "invalid",
+              "description": "Invalid longitude (not a number)"
+            }
+          ]
+        },
+        "description": "Test validation with invalid coordinates"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pre-request script for global setup",
+          "console.log('Running School Management API tests');"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test('Response time is less than 2000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "});"
+        ]
+      }
+    }
+  ]
+}
