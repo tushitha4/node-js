@@ -1,5 +1,5 @@
 // Ultra-minimal Vercel serverless function
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   // Sample schools data
   const schools = [
     {
