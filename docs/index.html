@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Management API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .api-info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .method {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .test-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #d4edda;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏫 School Management API</h1>
+        
+        <div class="api-info">
+            <h3>API Information</h3>
+            <p><strong>Status:</strong> <span id="status">Checking...</span></p>
+            <p><strong>Version:</strong> 1.0.0</p>
+            <p><strong>Mode:</strong> Demo (In-memory storage)</p>
+            <p><strong>Base URL:</strong> <span id="baseUrl">-</span></p>
+        </div>
+
+        <h3>Available Endpoints</h3>
+        
+        <div class="endpoint">
+            <span class="method">GET</span> <code>/health</code>
+            <p>Check API health status</p>
+            <button onclick="testHealth()">Test Health</button>
+        </div>
+
+        <div class="endpoint">
+            <span class="method">GET</span> <code>/api/listSchools</code>
+            <p>List schools sorted by proximity</p>
+            <label>Latitude: <input type="number" id="lat" value="40.7128" step="0.0001"></label>
+            <label>Longitude: <input type="number" id="lon" value="-74.0060" step="0.0001"></label>
+            <button onclick="testListSchools()">Test List Schools</button>
+        </div>
+
+        <div class="endpoint">
+            <span class="method">POST</span> <code>/api/addSchool</code>
+            <p>Add a new school</p>
+            <label>Name: <input type="text" id="schoolName" value="Test School"></label><br>
+            <label>Address: <input type="text" id="schoolAddress" value="123 Test Street"></label><br>
+            <label>Latitude: <input type="number" id="schoolLat" value="40.7500" step="0.0001"></label><br>
+            <label>Longitude: <input type="number" id="schoolLon" value="-73.9800" step="0.0001"></label><br>
+            <button onclick="testAddSchool()">Test Add School</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Test Results</h3>
+            <div id="result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Sample schools data (simulating API)
+        let schools = [
+            { id: 1, name: "Central High School", address: "123 Education Blvd", latitude: 40.7128, longitude: -74.0060 },
+            { id: 2, name: "Westside Elementary", address: "456 Learning Lane", latitude: 40.7580, longitude: -73.9855 },
+            { id: 3, name: "North Academy", address: "789 Knowledge Drive", latitude: 40.7831, longitude: -73.9712 }
+        ];
+
+        // Calculate distance using Haversine formula
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function showResult(data, isError = false) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = isError ? 'result error' : 'result';
+            resultDiv.textContent = JSON.stringify(data, null, 2);
+        }
+
+        function testHealth() {
+            const response = {
+                success: true,
+                message: 'Server is healthy (Demo Mode)',
+                timestamp: new Date().toISOString(),
+                schools_count: schools.length
+            };
+            showResult(response);
+        }
+
+        function testListSchools() {
+            const lat = parseFloat(document.getElementById('lat').value);
+            const lon = parseFloat(document.getElementById('lon').value);
+
+            if (isNaN(lat) || isNaN(lon)) {
+                showResult({ error: 'Invalid coordinates' }, true);
+                return;
+            }
+
+            const schoolsWithDistance = schools.map(school => ({
+                ...school,
+                distance: calculateDistance(lat, lon, school.latitude, school.longitude)
+            }));
+
+            schoolsWithDistance.sort((a, b) => a.distance - b.distance);
+
+            const response = {
+                success: true,
+                message: 'Schools retrieved successfully',
+                data: schoolsWithDistance,
+                count: schoolsWithDistance.length
+            };
+
+            showResult(response);
+        }
+
+        function testAddSchool() {
+            const name = document.getElementById('schoolName').value;
+            const address = document.getElementById('schoolAddress').value;
+            const lat = parseFloat(document.getElementById('schoolLat').value);
+            const lon = parseFloat(document.getElementById('schoolLon').value);
+
+            if (!name || !address || isNaN(lat) || isNaN(lon)) {
+                showResult({ error: 'All fields are required' }, true);
+                return;
+            }
+
+            if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                showResult({ error: 'Invalid coordinates' }, true);
+                return;
+            }
+
+            const newSchool = {
+                id: schools.length + 1,
+                name: name.trim(),
+                address: address.trim(),
+                latitude: lat,
+                longitude: lon,
+                created_at: new Date().toISOString()
+            };
+
+            schools.push(newSchool);
+
+            const response = {
+                success: true,
+                message: 'School added successfully',
+                data: newSchool
+            };
+
+            showResult(response);
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('status').textContent = 'Running (Demo Mode)';
+            document.getElementById('baseUrl').textContent = window.location.origin;
+        });
+    </script>
+</body>
+</html>
